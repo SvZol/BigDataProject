@@ -23,7 +23,7 @@ Two dedup safeguards, both needed in practice:
      older run left duplicates before this fix).
 
 Usage:
-    python3 consume_arxiv_live.py
+    python3 live_updates/consume_arxiv_live.py
 """
 
 import json

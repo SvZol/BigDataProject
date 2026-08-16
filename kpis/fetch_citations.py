@@ -9,7 +9,7 @@ Resumable: if the script is interrupted (network error, Ctrl+C), re-running it
 skips ids that are already in the output file and continues from there.
 
 Usage:
-    python3 fetch_citations.py
+    python3 kpis/fetch_citations.py
 """
 
 import json

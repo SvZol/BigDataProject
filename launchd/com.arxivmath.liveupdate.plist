@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.arxivmath.liveupdate</string>
+
+    <!-- Runs update_live.sh through bash. Replace both REPLACE_WITH_PROJECT_PATH
+         placeholders below with the absolute path to this project on your Mac,
+         e.g. /Users/svber/projects/arxiv-math-rag -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>REPLACE_WITH_PROJECT_PATH/update_live.sh</string>
+    </array>
+
+    <!-- Every Monday at 09:00. Weekday 1 = Monday (0 and 7 both mean Sunday). -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>REPLACE_WITH_PROJECT_PATH/logs/launchd_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>REPLACE_WITH_PROJECT_PATH/logs/launchd_stderr.log</string>
+
+    <!-- Do not run right when the agent is registered, only on the schedule
+         above. launchd itself catches up on a missed Monday run once the
+         Mac wakes up, so this does not need to be true for that. -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

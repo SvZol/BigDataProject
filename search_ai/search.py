@@ -4,8 +4,8 @@ the same model used to build the index (all-mpnet-base-v2), runs a kNN search
 against Elasticsearch, and prints the top matches.
 
 Usage:
-    python3 search.py "concentration inequalities for random matrices"
-    python3 search.py "some paper title and abstract here" --since 2025-01-01 --k 5
+    python3 search_ai/search.py "concentration inequalities for random matrices"
+    python3 search_ai/search.py "some paper title and abstract here" --since 2025-01-01 --k 5
 """
 
 import argparse

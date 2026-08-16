@@ -23,7 +23,7 @@ A TF-IDF (keyword search) baseline is run through the same two evaluations, as
 a sanity check on whether semantic embeddings actually beat keyword search.
 
 Usage:
-    python3 evaluate_embeddings.py
+    python3 search_ai/evaluate_embeddings_standart.py
 """
 
 import json

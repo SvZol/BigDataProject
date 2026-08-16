@@ -14,7 +14,7 @@ in the exact topic), just without a location claim -- the LLM prompt
 explicitly forbids inventing an affiliation.
 
 Usage:
-    python3 find_advisor.py "Markov chains" "random graphs"
+    python3 search_ai/find_advisor.py "Markov chains" "random graphs"
 """
 
 import argparse

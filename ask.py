@@ -120,13 +120,13 @@ def main():
     print(f"-> routed to: {route}  ({reason})\n")
 
     if route == "theorem":
-        subprocess.run([sys.executable, "find_theorem.py", args.question])
+        subprocess.run([sys.executable, "search_ai/find_theorem.py", args.question])
     elif route == "advisor":
-        subprocess.run([sys.executable, "find_advisor.py", args.question])
+        subprocess.run([sys.executable, "search_ai/find_advisor.py", args.question])
     elif route == "trend":
         show_trend(args.question)
     else:
-        subprocess.run([sys.executable, "rag_answer.py", args.question])
+        subprocess.run([sys.executable, "search_ai/rag_answer.py", args.question])
 
 
 if __name__ == "__main__":

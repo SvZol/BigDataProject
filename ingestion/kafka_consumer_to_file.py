@@ -5,7 +5,7 @@ topic and stops once it has caught up (a short idle timeout ends the batch
 pickup, since this is a one-shot consumer rather than an always-on service).
 
 Usage:
-    python3 kafka_consumer_to_file.py
+    python3 ingestion/kafka_consumer_to_file.py
 """
 
 import json

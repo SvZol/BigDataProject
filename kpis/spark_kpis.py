@@ -15,8 +15,8 @@ the presentation):
                                       count (topic popularity vs. real impact)
 
 Usage:
-    python3 spark_kpis.py
-    python3 spark_kpis.py --categories math.CO math.OC
+    python3 kpis/spark_kpis.py
+    python3 kpis/spark_kpis.py --categories math.CO math.OC
 
 --categories lets you focus the report on a subset of the four indexed
 categories (math.PR, math.ST, math.CO, math.OC). It can only select among

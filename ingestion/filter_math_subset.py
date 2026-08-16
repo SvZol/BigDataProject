@@ -3,7 +3,7 @@ Filters the full arXiv metadata dump down to a subset:
 categories math.PR, math.ST, math.CO, math.OC from the last 3 years.
 
 Usage (from project root):
-    python3 filter_math_subset.py
+    python3 ingestion/filter_math_subset.py
 """
 
 import json

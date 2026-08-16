@@ -30,7 +30,7 @@ Honest limits:
     forcing a guess.
 
 Usage:
-    python3 find_theorem.py "concentration inequality for the largest eigenvalue of a random matrix"
+    python3 search_ai/find_theorem.py "concentration inequality for the largest eigenvalue of a random matrix"
 """
 
 import argparse
@@ -182,21 +182,32 @@ def find_citation_strings(text, bib_dict):
     return results
 
 
-def semantic_scholar_lookup(query_text):
+def semantic_scholar_lookup(query_text, retries=3):
     """One-hop lookup: try to resolve a citation string to a real paper via
-    Semantic Scholar's title search. Best-effort -- returns None on any failure
-    rather than raising, since this is a bonus enrichment, not core logic."""
+    Semantic Scholar's title search. Best-effort -- returns None on repeated
+    failure rather than raising, since this is a bonus enrichment, not core
+    logic (the citation string itself is already shown to the LLM either way)."""
     params = urllib.parse.urlencode({"query": query_text[:300], "fields": "title,abstract,year,externalIds", "limit": 1})
     url = f"https://api.semanticscholar.org/graph/v1/paper/search?{params}"
     req = urllib.request.Request(url, headers={"User-Agent": "student-thesis-search-project/1.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            data = json.loads(resp.read())
-        papers = data.get("data") or []
-        return papers[0] if papers else None
-    except Exception as e:
-        print(f"    (citation-hop lookup failed: {e})")
-        return None
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = json.loads(resp.read())
+            papers = data.get("data") or []
+            return papers[0] if papers else None
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < retries - 1:
+                wait = 5 * (attempt + 1)
+                print(f"    rate-limited, waiting {wait}s...")
+                time.sleep(wait)
+                continue
+            print(f"    (citation-hop lookup failed: {e})")
+            return None
+        except Exception as e:
+            print(f"    (citation-hop lookup failed: {e})")
+            return None
+    return None
 
 
 def main():

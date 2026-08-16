@@ -1,0 +1,25 @@
+=== Live update run: יום ב׳ אוג׳ 17 2026 00:34:25 IDT ===
+/Users/svber/projects/arxiv-math-rag/live_updates/poll_arxiv_live.py:221: DeprecationWarning: value_serializer does not implement kafka.serializer.Serializer
+  main()
+Checking math.PR...
+  fetched 50 entries, newest: 2026-08-13 (2608.13559)
+  cutoff: 2026-08-13 (from saved state, data/live_poll_state.json)
+Checking math.ST...
+  fetched 50 entries, newest: 2026-08-13 (2608.13520)
+  cutoff: 2026-08-13 (from saved state, data/live_poll_state.json)
+Checking math.CO...
+  fetched 50 entries, newest: 2026-08-13 (2608.13544)
+  cutoff: 2026-08-13 (from saved state, data/live_poll_state.json)
+Checking math.OC...
+  fetched 50 entries, newest: 2026-08-13 (2608.13535)
+  cutoff: 2026-08-13 (from saved state, data/live_poll_state.json)
+
+Done. Found 0 genuinely new paper(s) across 4 categories, published to Kafka topic 'arxiv-papers-live'.
+/Users/svber/projects/arxiv-math-rag/live_updates/consume_arxiv_live.py:63: DeprecationWarning: value_deserializer does not implement kafka.serializer.Deserializer
+  consumer = KafkaConsumer(
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading embedding model...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 7032.56it/s]
+
+Done. Added 0 new paper(s) to 'arxiv_math' -- searchable right now (0 duplicate message(s) skipped).
+=== Done: יום ב׳ אוג׳ 17 2026 00:35:00 IDT ===

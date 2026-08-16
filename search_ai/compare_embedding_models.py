@@ -13,7 +13,7 @@ For each model we report:
   - a few example nearest-neighbor lists, for manual sanity-checking.
 
 Usage:
-    python3 compare_embedding_models.py
+    python3 search_ai/compare_embedding_models.py
 """
 
 import json

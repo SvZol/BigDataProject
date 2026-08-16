@@ -1,13 +1,13 @@
 """
 Embeds every paper in the filtered arXiv math subset with the chosen model
-(all-mpnet-base-v2, picked via evaluate_embeddings.py) and bulk-loads the
-result into the Elasticsearch index `arxiv_math`.
+(all-mpnet-base-v2, picked via evaluate_embeddings_standart.py) and bulk-loads
+the result into the Elasticsearch index `arxiv_math`.
 
 Text embedded per paper: "{title}. {abstract}" (same convention used during
 model evaluation).
 
 Usage (from project root):
-    python3 build_index.py
+    python3 search_ai/build_index.py
 """
 
 import json

@@ -25,8 +25,8 @@ what's new since the previous check. --since-hours is still available as a
 manual override (e.g. to force an even wider check on demand).
 
 Usage:
-    python3 poll_arxiv_live.py
-    python3 poll_arxiv_live.py --since-hours 48
+    python3 live_updates/poll_arxiv_live.py
+    python3 live_updates/poll_arxiv_live.py --since-hours 48
 """
 
 import argparse

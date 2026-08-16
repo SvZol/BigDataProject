@@ -6,7 +6,7 @@ production version of this service would keep consuming new submissions
 instead of replaying a static snapshot).
 
 Usage:
-    python3 kafka_producer.py
+    python3 ingestion/kafka_producer.py
 """
 
 import json

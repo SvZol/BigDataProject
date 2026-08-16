@@ -5,8 +5,8 @@ and asking a local LLM (via Ollama) to answer using only that retrieved
 context, citing which papers it actually used.
 
 Usage:
-    python3 rag_answer.py "What are recent approaches to concentration inequalities for random matrices?"
-    python3 rag_answer.py "some question" --since 2025-01-01 --k 5
+    python3 search_ai/rag_answer.py "What are recent approaches to concentration inequalities for random matrices?"
+    python3 search_ai/rag_answer.py "some question" --since 2025-01-01 --k 5
 """
 
 import argparse

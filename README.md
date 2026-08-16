@@ -67,13 +67,15 @@ https://www.kaggle.com/datasets/Cornell-University/arxiv
 Full dataset: about 2.2 million papers, roughly 3.5 GB as a single JSON
 file (`arxiv-metadata-oai-snapshot.json`). We only use a filtered subset:
 categories math.PR, math.ST, math.CO, math.OC, from the last 3 years,
-which comes out to 57,155 papers.
+which comes out to roughly 57,000 papers. The exact count shifts a little
+on every run, since "last 3 years" is a rolling window measured from today,
+not a fixed date range.
 
 To reproduce the subset:
 
 1. Download `arxiv-metadata-oai-snapshot.json` from the Kaggle link above
    and place it at `raw/arxiv-metadata-oai-snapshot.json`.
-2. Run `python3 filter_math_subset.py`. This writes
+2. Run `python3 ingestion/filter_math_subset.py`. This writes
    `data/arxiv_math_subset.jsonl`, the filtered subset used by every other
    script in this project.
 
@@ -84,29 +86,31 @@ filtered data.
 
 ## How to run
 
-Run these in order. Steps 1 to 3 build the batch pipeline, step 4 selects
-and builds the search index, steps 5 to 8 are the things a user actually
-runs, and step 9 is optional (keeps the index updated with real new papers).
+Scripts are grouped into folders by what they do: `ingestion/`, `kpis/`,
+`search_ai/`, `live_updates/`. Run everything below from the project root,
+in order. Steps 1 to 3 build the batch pipeline, step 4 selects and builds
+the search index, steps 5 to 8 are the things a user actually runs, and
+step 9 is optional (keeps the index updated with real new papers).
 
 **1. Filter the raw dataset**
 
 ```
-python3 filter_math_subset.py
+python3 ingestion/filter_math_subset.py
 ```
 
 **2. Kafka ingestion (producer/consumer)**
 
 ```
-python3 kafka_producer.py
-python3 kafka_consumer_to_file.py
+python3 ingestion/kafka_producer.py
+python3 ingestion/kafka_consumer_to_file.py
 ```
 
 **3. Citations and Spark KPIs**
 
 ```
-python3 fetch_citations.py
-python3 spark_kpis.py
-python3 spark_kpis.py --categories math.CO math.OC   # optional, subset only
+python3 kpis/fetch_citations.py
+python3 kpis/spark_kpis.py
+python3 kpis/spark_kpis.py --categories math.CO math.OC   # optional, subset only
 ```
 
 Writes `data/kpi_category_year.csv`, `data/kpi_top_authors.csv`,
@@ -115,9 +119,9 @@ Writes `data/kpi_category_year.csv`, `data/kpi_top_authors.csv`,
 **4. Pick the embedding model, then build the search index**
 
 ```
-python3 compare_embedding_models.py       # first-pass, homemade heuristic (kept for the record)
-python3 evaluate_embeddings_standart.py   # final methodology: MTEB/BEIR-style metrics
-python3 build_index.py
+python3 search_ai/compare_embedding_models.py       # first-pass, homemade heuristic (kept for the record)
+python3 search_ai/evaluate_embeddings_standart.py   # final methodology: MTEB/BEIR-style metrics
+python3 search_ai/build_index.py
 ```
 
 `build_index.py` embeds every paper with `all-mpnet-base-v2` (the model
@@ -127,26 +131,26 @@ everything into the Elasticsearch index `arxiv_math`.
 **5. Semantic search**
 
 ```
-python3 search.py "concentration inequalities for random matrices"
-python3 search.py "some paper title and abstract here" --since 2025-01-01 --k 5
+python3 search_ai/search.py "concentration inequalities for random matrices"
+python3 search_ai/search.py "some paper title and abstract here" --since 2025-01-01 --k 5
 ```
 
 **6. RAG (question answering with citations)**
 
 ```
-python3 rag_answer.py "What are recent approaches to concentration inequalities for random matrices?"
+python3 search_ai/rag_answer.py "What are recent approaches to concentration inequalities for random matrices?"
 ```
 
 **7. Advisor finder**
 
 ```
-python3 find_advisor.py "Markov chains" "random graphs"
+python3 search_ai/find_advisor.py "Markov chains" "random graphs"
 ```
 
 **8. Theorem finder**
 
 ```
-python3 find_theorem.py "concentration inequality for the largest eigenvalue of a random matrix"
+python3 search_ai/find_theorem.py "concentration inequality for the largest eigenvalue of a random matrix"
 ```
 
 **9. Ask anything (routes to the right tool automatically)**
@@ -163,19 +167,80 @@ python3 ask.py "Who works on convex optimization in Israel?"
 python3 ask.py "What's the trend for random graphs?"
 ```
 
+On a shaky internet connection, `SentenceTransformer` can fail with a DNS
+error while it checks Hugging Face Hub for model updates, even though the
+model is already downloaded and cached locally. If this happens during a
+demo, run this once beforehand to skip that network check entirely:
+
+```
+export HF_HUB_OFFLINE=1
+```
+
 ## Live updates
 
-Separate from the batch pipeline above, the index can be kept current with
-real new papers instead of only the original snapshot.
+Separate from the batch pipeline above, the index can stay current with real
+new papers. It does not only use the papers from the original snapshot.
 
 ```
-python3 poll_arxiv_live.py                  # checks the real arXiv API, since our newest paper
-python3 poll_arxiv_live.py --since-hours 48 # or, override with an explicit time window
-python3 consume_arxiv_live.py               # reads the live topic, embeds and upserts into arxiv_math
+python3 live_updates/poll_arxiv_live.py                  # checks the real arXiv API, since our newest paper
+python3 live_updates/poll_arxiv_live.py --since-hours 48 # or, set a fixed time window instead
+python3 live_updates/consume_arxiv_live.py               # reads the live topic, embeds and upserts into arxiv_math
 ```
 
-Tested end to end: found and indexed 187 genuinely new papers this way,
-immediately searchable through `search.py` / `ask.py`.
+Tested end to end: found and indexed 187 real new papers this way. They were
+searchable right away through `search_ai/search.py` and `ask.py`.
+
+Note: arXiv does not publish new papers on weekends. A run on a Saturday or
+Sunday can show 0 new papers found, and that is expected, not a bug.
+
+### Running it on a schedule
+
+`update_live.sh` runs both commands above in one step and writes a log file
+to `logs/`. If Elasticsearch is not reachable, it skips the run instead of
+failing with an error, so a scheduled run on a day Docker is off is not a
+problem.
+
+```
+bash update_live.sh
+```
+
+To run it every week automatically, use a macOS launchd agent. This works
+better than cron on a Mac, since it can also run after the Mac wakes up if
+it missed the scheduled time while asleep.
+
+1. Open `launchd/com.arxivmath.liveupdate.plist` and change both
+   `REPLACE_WITH_PROJECT_PATH` placeholders to the real path of this project
+   on your machine.
+2. Copy it to LaunchAgents and register it:
+
+```
+cp launchd/com.arxivmath.liveupdate.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.arxivmath.liveupdate.plist
+```
+
+If that first `bootstrap` command fails, the fix that worked for us was to
+remove the old registration first, then register again:
+
+```
+launchctl bootout gui/$(id -u)/com.arxivmath.liveupdate
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.arxivmath.liveupdate.plist
+```
+
+It runs every Monday at 09:00, as long as Docker (Elasticsearch and Kafka)
+is running at that time. Check that it registered correctly:
+
+```
+launchctl print gui/$(id -u)/com.arxivmath.liveupdate
+```
+
+To stop it:
+
+```
+launchctl bootout gui/$(id -u)/com.arxivmath.liveupdate
+```
+
+Tested on a real Mac: the schedule is active, and a manual run of
+`update_live.sh` completed with no errors.
 
 ## Evaluation
 
@@ -196,33 +261,47 @@ in the project.
 
 ## Project structure
 
+Scripts are grouped by what they do, the same grouping used on the
+presentation's script map slide:
+
 ```
-filter_math_subset.py       filters the raw dataset down to our 4 categories, last 3 years
-kafka_producer.py           publishes the filtered subset to Kafka topic arxiv-papers
-kafka_consumer_to_file.py   reads the topic back into a file for Spark
-fetch_citations.py          pulls real citation counts from Semantic Scholar
-spark_kpis.py               Spark job: category/year counts, top authors, keyword trends
-compare_embedding_models.py first-pass embedding model comparison (homemade heuristic)
-evaluate_embeddings_standart.py  final embedding model evaluation (MTEB/BEIR-style metrics)
-build_index.py              embeds and loads the filtered subset into Elasticsearch
-search.py                   semantic search over the index
-rag_answer.py                question answering with citations, via a local LLM (Ollama)
-find_advisor.py             advisor finder
-find_theorem.py             theorem finder
-ask.py                      single entry point, routes any question to the right script above
-poll_arxiv_live.py          checks the real arXiv API for genuinely new papers
-consume_arxiv_live.py       embeds and upserts new papers into the same Elasticsearch index
-make_sample.py              writes a small real sample of the dataset, for the repo
-check_setup.sh              checks the local environment has everything this project needs
-architecture_diagram.png    architecture and data flow diagram
-design_document.docx        design document (task, architecture, technologies, AI component)
+ingestion/
+  filter_math_subset.py       filters the raw dataset down to our 4 categories, last 3 years
+  kafka_producer.py           publishes the filtered subset to Kafka topic arxiv-papers
+  kafka_consumer_to_file.py   reads the topic back into a file for Spark
+
+kpis/
+  fetch_citations.py          pulls real citation counts from Semantic Scholar
+  spark_kpis.py                Spark job: category/year counts, top authors, keyword trends
+
+search_ai/
+  compare_embedding_models.py first-pass embedding model comparison (homemade heuristic)
+  evaluate_embeddings_standart.py  final embedding model evaluation (MTEB/BEIR-style metrics)
+  build_index.py              embeds and loads the filtered subset into Elasticsearch
+  search.py                   semantic search over the index
+  rag_answer.py                question answering with citations, via a local LLM (Ollama)
+  find_advisor.py             advisor finder
+  find_theorem.py             theorem finder
+
+live_updates/
+  poll_arxiv_live.py          checks the real arXiv API for genuinely new papers
+  consume_arxiv_live.py       embeds and upserts new papers into the same Elasticsearch index
+
+ask.py                       single entry point, routes any question to the right script above
+update_live.sh                runs the two live_updates scripts together, meant for a weekly schedule
+launchd/                     macOS launchd agent to run update_live.sh automatically, weekly
+make_sample.py               writes a small real sample of the dataset, for the repo
+check_setup.sh               checks the local environment has everything this project needs
+architecture_diagram.png     architecture and data flow diagram
+design_document.docx         design document (task, architecture, technologies, AI component)
+slides.pptx                  demo presentation slides
 ```
 
 ## Notes
 
 - All four categories (math.PR, math.ST, math.CO, math.OC) are indexed
-  together. `spark_kpis.py --categories` only filters the KPI report, not
-  the search index.
+  together. `kpis/spark_kpis.py --categories` only filters the KPI report,
+  not the search index.
 - RAG uses `llama3.1:8b` through Ollama by default (tested against the
   smaller `llama3.2` 3B model, 8B gave noticeably better answers).
 - Institutional affiliations from the advisor finder are only shown when
