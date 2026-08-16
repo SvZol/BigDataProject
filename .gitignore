@@ -1,0 +1,24 @@
+# Raw dataset (download from Kaggle, too large to commit)
+raw/
+
+# Generated data, except the small committed sample
+data/*
+!data/sample_arxiv_math_subset.jsonl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+
+# OS junk
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
